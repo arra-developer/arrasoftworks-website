@@ -57,7 +57,7 @@
     <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sedgwick+Ave&display=swap" />
   </noscript>
-  <link rel="stylesheet" href="styles.css?v=22" />
+  <link rel="stylesheet" href="styles.css?v=24" />
 </head>
 <body>
 
@@ -323,7 +323,8 @@
         </div>
       </div>
 
-      <div class="ticker tticker" data-speed="45">
+      <!-- Testimonials hidden until real client quotes exist: remove the hidden attribute to show -->
+      <div class="ticker tticker" data-speed="45" hidden>
         <div class="ticker__track">
           <blockquote class="tcard" style="--h:40"><div class="tcard__top"><i></i><span class="tcard__mark">”</span></div><p>[Client quote, up to 50 characters]</p><footer>[Name | Title, Company]</footer></blockquote>
           <blockquote class="tcard" style="--h:100"><div class="tcard__top"><i></i><span class="tcard__mark">”</span></div><p>[Client quote, up to 50 characters]</p><footer>[Name | Title, Company]</footer></blockquote>
@@ -375,6 +376,7 @@
             <button type="submit" class="cform__submit">Send <span>→</span></button>
             <p class="cform__note"><i aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 0l2 1.6 2.5-.2.9 2.4 2.2 1.2-.6 2.5 1 2.3-2 1.5-.4 2.5-2.5.3L8 16l-2-1.6-2.5.2-.9-2.4-2.2-1.2.6-2.5-1-2.3 2-1.5.4-2.5 2.5-.3z" fill="currentColor"/><path d="M5 8.2l2 2 4-4.2" stroke="currentColor" style="color:var(--accent)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i><span>MVP to next round.<br>One partner.</span></p>
           </div>
+          <p class="cform__legal">By sending this form you agree to our <a href="privacy.html">Privacy Policy</a>.</p>
           <p class="cform__status" role="status" hidden></p>
         </form>
       </div>
@@ -401,12 +403,13 @@
       </div>
       <div class="footer__bottom">
         <span>© <span id="year"></span> Arra Softworks. All rights reserved.</span>
+        <nav aria-label="Legal"><a href="privacy.html" class="link-underline">Privacy Policy</a></nav>
         <span class="footer__credits"><span>Crafted with <em class="heart">♥</em> by Arra Softworks</span><a href="#top" class="footer__totop">Back to top ↑</a></span>
       </div>
     </div>
     <div class="footer__big wordmark" aria-hidden="true"><span data-word="arra"></span></div>
   </footer>
 
-  <script src="script.js?v=10" defer></script>
+  <script src="script.js?v=11" defer></script>
 </body>
 </html>

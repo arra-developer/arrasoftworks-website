@@ -999,3 +999,6 @@ span.chip:hover { color: inherit; background: none; border-color: var(--ink-400)
 .cmp__table--offer thead th:first-child { text-transform: uppercase; color: var(--ink-600); font-size: 12px; }
 .cmp__table--offer th[scope="row"] { width: 46%; }
 .highlights .h2 { max-width: 26ch; }
+[hidden] { display: none !important; }
+.cform__legal { font-size: 12px; font-weight: 500; opacity: .75; margin-top: -4px; }
+.cform__legal a { text-decoration: underline; text-underline-offset: 2px; }

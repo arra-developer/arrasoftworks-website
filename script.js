@@ -83,11 +83,12 @@
 
   /* ---------- Tickers ---------- */
   $$(".ticker").forEach((t) => {
+    if (t.hidden || t.closest("[hidden]")) return; // hidden strips have no width to measure
     const track = $(".ticker__track", t);
     // Duplicate until the track is at least twice the viewport, so the -50% loop is seamless.
     const original = track.innerHTML;
     track.innerHTML = original + original;
-    while (track.scrollWidth < window.innerWidth * 2.2) track.innerHTML += original + original;
+    for (let n = 0; n < 12 && track.scrollWidth && track.scrollWidth < window.innerWidth * 2.2; n++) track.innerHTML += original + original;
     const pxPerSec = Number(t.dataset.speed) || 40;
     track.style.setProperty("--dur", `${track.scrollWidth / 2 / pxPerSec}s`);
     $$("[id]", track).forEach((n) => n.removeAttribute("id"));
