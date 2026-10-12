@@ -3,7 +3,7 @@
    2. Nothing loads while the ID is still the placeholder, so local testing stays clean.
    3. In GA4, mark "generate_lead" as a key event (conversion). */
 (() => {
-  const GA_MEASUREMENT_ID = "G-XXXXXXXXXX"; // TODO: replace with the real GA4 ID
+  const GA_MEASUREMENT_ID = "G-0STV8H9KHK";
 
   const enabled = /^G-[A-Z0-9]+$/.test(GA_MEASUREMENT_ID) && GA_MEASUREMENT_ID !== "G-XXXXXXXXXX"
     && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname);

@@ -993,3 +993,9 @@ span.chip:hover { color: inherit; background: none; border-color: var(--ink-400)
 .cform.is-sending .cform__submit { opacity: .6; cursor: progress; }
 @media (min-width: 1001px) { .stats { grid-template-columns: repeat(3, 1fr); } }
 .strip-sec { margin-bottom: 64px; } .strip-sec .logos--banner { border-bottom: var(--border); }
+
+/* "What you get" table: offer breakdown, not a competitor rating */
+.cmp__table--offer { min-width: 560px; }
+.cmp__table--offer thead th:first-child { text-transform: uppercase; color: var(--ink-600); font-size: 12px; }
+.cmp__table--offer th[scope="row"] { width: 46%; }
+.highlights .h2 { max-width: 26ch; }
