@@ -74,10 +74,14 @@ section { position: relative; }
 }
 
 /* ===== Progress + cursor ===== */
+/* Lives inside the nav, on the bottom edge of the frosted bar (::before is inset 8px). */
 .progress {
-  position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 120;
-  background: var(--accent); transform-origin: 0 50%; transform: scaleX(0);
+  position: absolute; left: 0; right: 0; bottom: 8px; height: 3px; z-index: 1; pointer-events: none;
+  background: var(--accent); box-shadow: 0 0 10px var(--accent-glow);
+  transform-origin: 0 50%; transform: scaleX(0);
+  opacity: 0; transition: opacity .4s;
 }
+.nav.is-scrolled .progress { opacity: 1; }
 .cursor {
   position: fixed; top: -22px; left: -22px; width: 44px; height: 44px; border-radius: 50%;
   background: var(--accent); border: 1px solid var(--hairline);
@@ -102,12 +106,13 @@ section { position: relative; }
 .nav::before {
   content: ""; position: absolute; inset: 8px 0; z-index: -1; pointer-events: none;
   background: rgba(250, 250, 250, .8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  box-shadow: 0 1px 0 var(--hairline); opacity: 0; transition: opacity .4s;
+  box-shadow: 0 1px 0 var(--hairline), 0 10px 30px -18px rgba(19, 19, 17, .35);
+  opacity: 0; transform: translateY(-100%);
+  transition: opacity .35s, transform .55s var(--ease-out);
 }
 @keyframes fadeIn { to { opacity: 1; } }
 .nav.is-scrolled { transform: translateY(-8px); }
-.nav.is-scrolled::before { opacity: 1; }
-.nav.is-hidden { transform: translateY(-110%); }
+.nav.is-scrolled::before { opacity: 1; transform: none; }
 .nav__logo { font-size: 26px; font-weight: 900; letter-spacing: -.02em; }
 .nav__logo sup { font-size: .45em; font-weight: 700; }
 .nav__links {

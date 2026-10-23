@@ -135,7 +135,6 @@
   const steps = $$(".step");
   const bar = $(".process__bar span");
   const count = $(".process__count b");
-  let lastY = window.scrollY;
   let ticking = false;
 
   const onScroll = () => {
@@ -146,9 +145,6 @@
     progress.style.transform = `scaleX(${docH > 0 ? y / docH : 0})`;
 
     nav.classList.toggle("is-scrolled", y > 40);
-    const menuOpen = document.body.classList.contains("menu-open");
-    nav.classList.toggle("is-hidden", !menuOpen && y > lastY && y > 400);
-    lastY = y;
 
     if (!reduced) {
       parallaxEls.forEach(({ el, speed }) => {
