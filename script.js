@@ -5,6 +5,7 @@
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const esc = (str) => str.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
   /* ---------- Intro ---------- */
   // No splash screen: once the first frame has painted, flip `loaded` so the hero
@@ -25,29 +26,30 @@
 
   /* ---------- Text splitting ---------- */
   // Word-mask reveal for headings.
+  // Text is escaped before it goes back in as HTML ("&" in the hero title, for one).
   $$(".split").forEach((el) => {
     const words = el.textContent.trim().split(/\s+/);
-    el.innerHTML = words
-      .map((w, i) => `<span class="word"><span style="--i:${i}">${w}</span></span>`)
+    el.innerHTML = `<span class="sr-only">${esc(words.join(" "))}</span>` + words
+      .map((w, i) => `<span class="word" aria-hidden="true"><span style="--i:${i}">${esc(w)}</span></span>`)
       .join(" ");
-    el.insertAdjacentHTML("afterbegin", `<span class="sr-only">${words.join(" ")}</span>`);
-    [...el.querySelectorAll(".word")].forEach((w) => w.setAttribute("aria-hidden", "true"));
+    el.classList.add("is-split");
   });
 
   // Per-character rise for body copy, words kept unbreakable.
   $$(".chars").forEach((el) => {
     let i = 0;
     const words = el.textContent.trim().split(/\s+/);
-    el.innerHTML = `<span class="sr-only">${words.join(" ")}</span>` + words
-      .map((w) => `<span class="w" aria-hidden="true">${[...w].map((c) => `<span class="ch" style="--i:${i++}">${c}</span>`).join("")}</span>`)
+    el.innerHTML = `<span class="sr-only">${esc(words.join(" "))}</span>` + words
+      .map((w) => `<span class="w" aria-hidden="true">${[...w].map((c) => `<span class="ch" style="--i:${i++}">${esc(c)}</span>`).join("")}</span>`)
       .join(" ");
+    el.classList.add("is-split");
   });
 
   /* ---------- Scroll reveals ---------- */
   $$("[data-delay]").forEach((el) => el.style.setProperty("--d", `${el.dataset.delay}s`));
 
   // Stagger siblings that reveal together.
-  $$(".problem__grid, .stats, .features, .plans, .team__grid, .faq__list").forEach((group) => {
+  $$(".problem__grid, .stats, .features, .plans, .team__grid, .faq__list, .nextsteps").forEach((group) => {
     [...group.children].forEach((child, i) => {
       if (!child.dataset.delay) child.style.setProperty("--d", `${i * 0.08}s`);
     });
@@ -105,6 +107,14 @@
     track.style.setProperty("--dur", `${track.scrollHeight / 2 / pxPerSec}s`);
   });
 
+  // Decorative loops pause while off screen.
+  if (!reduced && "IntersectionObserver" in window) {
+    const lio = new IntersectionObserver((entries) => {
+      entries.forEach((e) => e.target.classList.toggle("is-offscreen", !e.isIntersecting));
+    }, { rootMargin: "100px 0px" });
+    $$(".ticker:not([hidden]), .pain__list").forEach((el) => lio.observe(el));
+  }
+
   /* ---------- Staggered groups (cards rise / pop in sequence) ---------- */
   $$(".solution__grid").forEach((g) => $$(".rise", g).forEach((c, i) => c.style.setProperty("--i", i)));
   const groups = $$(".solution__grid, .board-wrap, .pgrid");
@@ -119,7 +129,8 @@
   /* ---------- Scroll-driven effects (one rAF loop) ---------- */
   const nav = $(".nav");
   const progress = $(".progress");
-  const parallaxEls = $$(".parallax");
+  // offsetTop ignores transforms, so the offset we apply never feeds back into the next measurement.
+  const parallaxEls = $$(".parallax").map((el) => ({ el, speed: Number(el.dataset.speed || 0.1) }));
   const process = $(".process");
   const steps = $$(".step");
   const bar = $(".process__bar span");
@@ -140,11 +151,12 @@
     lastY = y;
 
     if (!reduced) {
-      parallaxEls.forEach((el) => {
-        const r = el.getBoundingClientRect();
-        if (r.bottom < -200 || r.top > vh + 200) return;
-        const offset = (r.top + r.height / 2 - vh / 2) * Number(el.dataset.speed || 0.1);
-        el.style.translate = `0 ${offset.toFixed(1)}px`;
+      parallaxEls.forEach(({ el, speed }) => {
+        if (!el.offsetParent) return; // display:none on this breakpoint
+        const top = el.offsetParent.getBoundingClientRect().top + el.offsetTop;
+        const h = el.offsetHeight;
+        if (top + h < -200 || top > vh + 200) return;
+        el.style.setProperty("--sy", `${((top + h / 2 - vh / 2) * speed).toFixed(1)}px`);
       });
     }
 
@@ -233,22 +245,59 @@
   $$(".pgrid").forEach((g) => $$(".rise", g).forEach((c, i) => c.style.setProperty("--i", i)));
   $$(".cmp__table tbody tr").forEach((row, r) => $$("td i", row).forEach((d, c) => d.style.setProperty("--i", r * 4 + c)));
 
+  /* ---------- Comparison tabs ---------- */
+  // Two tables share one slot; the pill slides under the active tab. Arrow keys / Home / End move focus.
+  $$(".cmp__tabs").forEach((tabs) => {
+    const btns = $$('[role="tab"]', tabs);
+    const select = (btn, focus) => {
+      btns.forEach((b, i) => {
+        const on = b === btn;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        const panel = document.getElementById(b.getAttribute("aria-controls"));
+        if (panel) panel.hidden = !on;
+        if (on) tabs.dataset.active = String(i);
+      });
+      if (focus) btn.focus();
+    };
+    tabs.addEventListener("click", (e) => {
+      const b = e.target.closest('[role="tab"]');
+      if (b && b.getAttribute("aria-selected") !== "true") select(b);
+    });
+    tabs.addEventListener("keydown", (e) => {
+      const i = btns.indexOf(document.activeElement);
+      if (i < 0 || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+      e.preventDefault();
+      const n = e.key === "Home" ? 0 : e.key === "End" ? btns.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + btns.length) % btns.length;
+      select(btns[n], true);
+    });
+  });
+
   /* ---------- FAQ accordion ---------- */
-  $$(".qa").forEach((qa) => {
+  // Height animates to the measured size, then is released to `auto` so an open answer
+  // still fits after a resize; closing pins it back to pixels first so it can animate.
+  const setQa = (qa, open) => {
     const q = $(".qa__q", qa);
     const a = $(".qa__a", qa);
+    qa.classList.toggle("is-open", open);
+    q.setAttribute("aria-expanded", String(open));
+    if (reduced) { a.style.height = open ? "auto" : "0px"; return; }
+    a.style.height = `${a.scrollHeight}px`;
+    if (!open) { void a.offsetHeight; a.style.height = "0px"; }
+  };
+  $$(".qa").forEach((qa, i) => {
+    const q = $(".qa__q", qa);
+    const a = $(".qa__a", qa);
+    a.id = a.id || `qa-answer-${i + 1}`;
+    q.setAttribute("aria-controls", a.id);
+    a.addEventListener("transitionend", (e) => {
+      if (e.target === a && e.propertyName === "height" && qa.classList.contains("is-open")) a.style.height = "auto";
+    });
     q.addEventListener("click", () => {
       const open = !qa.classList.contains("is-open");
       // Close the others so only one answer is open at a time.
-      $$(".qa.is-open").forEach((other) => {
-        if (other === qa) return;
-        other.classList.remove("is-open");
-        $(".qa__q", other).setAttribute("aria-expanded", "false");
-        $(".qa__a", other).style.height = "0px";
-      });
-      qa.classList.toggle("is-open", open);
-      q.setAttribute("aria-expanded", String(open));
-      a.style.height = open ? `${a.scrollHeight}px` : "0px";
+      $$(".qa.is-open").forEach((other) => { if (other !== qa) setQa(other, false); });
+      setQa(qa, open);
     });
   });
 
@@ -266,6 +315,9 @@
   };
   burger.addEventListener("click", () => setMenu(burger.getAttribute("aria-expanded") !== "true"));
   $$("a", menu).forEach((a) => a.addEventListener("click", () => setMenu(false)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && menu.classList.contains("is-open")) { setMenu(false); burger.focus(); }
+  });
 
   /* ---------- Work rail: drag to scroll ---------- */
   const rail = $(".work__rail");
@@ -285,61 +337,89 @@
   }
 
   /* ---------- Pointer effects (desktop only) ---------- */
+  // Everything here writes `translate`, `rotate` or CSS variables: compositor work, no layout.
   if (finePointer && !reduced) {
-    // Custom cursor with easing.
+    // Custom cursor: eases toward the pointer and stops its rAF loop once it has caught up.
     const cursor = $(".cursor");
     document.documentElement.classList.add("has-cursor");
-    let mx = 0, my = 0, cx = 0, cy = 0;
+    let mx = 0, my = 0, cx = 0, cy = 0, following = false, seen = false;
+    const follow = () => {
+      cx += (mx - cx) * 0.4; cy += (my - cy) * 0.4;
+      cursor.style.translate = `${cx.toFixed(1)}px ${cy.toFixed(1)}px`;
+      if (Math.abs(mx - cx) + Math.abs(my - cy) > 0.3) requestAnimationFrame(follow);
+      else following = false;
+    };
     window.addEventListener("pointermove", (e) => {
       mx = e.clientX; my = e.clientY;
+      if (!seen) { cx = mx; cy = my; seen = true; } // don't fly in from the corner
       cursor.classList.add("is-active");
-    });
+      if (!following) { following = true; requestAnimationFrame(follow); }
+    }, { passive: true });
     document.addEventListener("pointerleave", () => cursor.classList.remove("is-active"));
-    const follow = () => {
-      cx += (mx - cx) * 0.45; cy += (my - cy) * 0.45;
-      cursor.style.translate = `${cx}px ${cy}px`;
-      requestAnimationFrame(follow);
-    };
-    follow();
-    $$("a, button, .qa__q, .av").forEach((el) => {
-      el.addEventListener("pointerenter", () => cursor.classList.add("is-hover"));
-      el.addEventListener("pointerleave", () => cursor.classList.remove("is-hover"));
+    window.addEventListener("pointerdown", () => cursor.classList.add("is-down"));
+    window.addEventListener("pointerup", () => cursor.classList.remove("is-down"));
+    // One delegated listener covers ticker clones and anything added later.
+    const hoverSel = "a, button, .qa__q, .av, .float-card, .tilt";
+    document.addEventListener("pointerover", (e) => {
+      const t = e.target instanceof Element ? e.target : null;
+      cursor.classList.toggle("is-hover", !!(t && t.closest(hoverSel)));
+      cursor.classList.toggle("is-text", !!(t && t.closest("input, textarea")));
     });
 
-    // Magnetic buttons.
+    // Magnetic buttons (the CSS transition on `translate` smooths the follow and the release).
     $$(".magnetic").forEach((el) => {
       el.addEventListener("pointermove", (e) => {
         const r = el.getBoundingClientRect();
         const x = (e.clientX - r.left - r.width / 2) * 0.25;
         const y = (e.clientY - r.top - r.height / 2) * 0.35;
-        el.style.translate = `${x}px ${y}px`;
+        el.style.translate = `${x.toFixed(1)}px ${y.toFixed(1)}px`;
       });
       el.addEventListener("pointerleave", () => (el.style.translate = ""));
     });
 
-    // 3D tilt cards.
+    // 3D tilt: one axis-angle `rotate`, so it composes with the reveal transform and hover lift.
     $$(".tilt").forEach((el) => {
+      let r = null;
+      el.addEventListener("pointerenter", () => (r = el.getBoundingClientRect()));
       el.addEventListener("pointermove", (e) => {
-        const r = el.getBoundingClientRect();
+        if (!r) r = el.getBoundingClientRect();
         const px = (e.clientX - r.left) / r.width - 0.5;
         const py = (e.clientY - r.top) / r.height - 0.5;
-        el.style.transform = `perspective(900px) rotateX(${(-py * 8).toFixed(2)}deg) rotateY(${(px * 8).toFixed(2)}deg) translateY(-4px)`;
+        const mag = Math.hypot(px, py);
+        if (mag < 0.01) return;
+        el.style.rotate = `${(-py / mag).toFixed(3)} ${(px / mag).toFixed(3)} 0 ${(mag * 9).toFixed(2)}deg`;
       });
-      el.addEventListener("pointerleave", () => (el.style.transform = ""));
+      el.addEventListener("pointerleave", () => { el.style.rotate = ""; r = null; });
     });
 
-    // Hero floating cards drift away from the pointer.
-    const floats = $$(".float-card");
-    const hero = $(".hero");
-    hero.addEventListener("pointermove", (e) => {
-      const nx = e.clientX / window.innerWidth - 0.5;
-      const ny = e.clientY / window.innerHeight - 0.5;
-      floats.forEach((f, i) => {
-        const depth = (i % 2 ? 1 : -1) * (10 + i * 4);
-        f.style.marginLeft = `${nx * depth}px`;
-        f.style.marginTop = `${ny * depth}px`;
+    // Soft spotlight that follows the pointer across cards.
+    $$(".pcard, .tl-card, .cform").forEach((el) => {
+      el.classList.add("spotlight");
+      el.addEventListener("pointermove", (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty("--mx", `${(e.clientX - r.left).toFixed(0)}px`);
+        el.style.setProperty("--my", `${(e.clientY - r.top).toFixed(0)}px`);
       });
     });
+
+    // Hero chips drift away from the pointer (CSS variables feed `translate`).
+    const floats = $$(".float-card");
+    const hero = $(".hero");
+    let nx = 0, ny = 0, queued = false;
+    const drift = () => {
+      queued = false;
+      floats.forEach((f, i) => {
+        const depth = (i % 2 ? 1 : -1) * (14 + i * 6);
+        f.style.setProperty("--dx", `${(nx * depth).toFixed(1)}px`);
+        f.style.setProperty("--dy", `${(ny * depth).toFixed(1)}px`);
+      });
+    };
+    hero.addEventListener("pointermove", (e) => {
+      nx = e.clientX / window.innerWidth - 0.5;
+      ny = e.clientY / window.innerHeight - 0.5;
+      if (!queued) { queued = true; requestAnimationFrame(drift); }
+    });
+    hero.addEventListener("pointerleave", () => { nx = 0; ny = 0; if (!queued) { queued = true; requestAnimationFrame(drift); } });
   }
 
   /* ---------- Nav: highlight the section in view ---------- */
@@ -393,11 +473,11 @@
         });
         const body = await res.json().catch(() => ({}));
         if (!res.ok || String(body.success) === "false") throw new Error(body.message || res.status);
-        status.textContent = "Thanks! We'll get back to you with next steps.";
+        status.textContent = "Got it. We'll reply within 1 business day with next steps.";
         form.dispatchEvent(new CustomEvent("arra:lead", { bubbles: true }));
         form.reset();
       } catch (err) {
-        status.textContent = "Sorry, that didn't send. Please email developer@arrasoftworks.com directly.";
+        status.textContent = "That didn't go through. Email us at developer@arrasoftworks.com and we'll pick it up from there.";
       } finally {
         submitBtn.disabled = false;
         form.classList.remove("is-sending");
@@ -411,7 +491,7 @@
 
 // "Ask AI" buttons: open each assistant with a prefilled question
 (() => {
-  const question = "Why should I choose Arra Softworks for app development and founder services?";
+  const question = "What should I look for in an app development partner, and how does Arra Softworks (arrasoftworks.com) compare for brands and founders?";
   const q = encodeURIComponent(question);
   const urls = {
     chatgpt: `https://chatgpt.com/?q=${q}`,

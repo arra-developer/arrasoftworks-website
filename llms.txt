@@ -1,0 +1,14 @@
+# Arra Softworks
+> Arra Softworks builds MVPs and mobile and web apps for founders and D2C and B2B brands, and supports founders with scaling, security, go-to-market and fundraising.
+
+## Services
+- [App Development](https://arrasoftworks.com/#app-development): product strategy and architecture; iOS, Android and web apps; APIs and backend; testing, deployment, post-launch support and a handover your team can maintain.
+- [Founder Services](https://arrasoftworks.com/#founder-services): MVP scoping and build; scaling to production; security and infrastructure review; cloud cost and performance tuning; go-to-market; pitch deck and investor narrative; fundraising support.
+
+## Process
+- [How we work](https://arrasoftworks.com/#process): Scope, Build, Test, Launch, Handover, Grow.
+
+## More
+- [FAQs](https://arrasoftworks.com/#faq)
+- [Contact](https://arrasoftworks.com/#cta): developer@arrasoftworks.com
+- [Privacy Policy](https://arrasoftworks.com/privacy.html)

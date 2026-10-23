@@ -1,4 +1,24 @@
+# robots.txt for https://arrasoftworks.com
 User-agent: *
+Allow: /
+
+# AI / answer-engine crawlers: explicitly allowed so Arra Softworks can be cited in AI answers
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
 Allow: /
 
 Sitemap: https://arrasoftworks.com/sitemap.xml

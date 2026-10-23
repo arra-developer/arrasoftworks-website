@@ -1,0 +1,15 @@
+{
+  "name": "Arra Softworks",
+  "short_name": "Arra",
+  "description": "MVP and app development for startups and brands.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#fafafa",
+  "theme_color": "#131311",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
